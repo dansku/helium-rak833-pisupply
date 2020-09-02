@@ -35,5 +35,4 @@ COPY --from=buildstep /usr/lib/libttn* /usr/lib/
 COPY run.py ./
 COPY start.sh ./
 
-# run when container lands on device
-CMD ["bash", "start.sh"]
+CMD ["python", "/opt/ttn-gateway/run.py"]

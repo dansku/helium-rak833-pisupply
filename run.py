@@ -34,17 +34,6 @@ if os.environ.get('HALT') != None:
   print ("*** HALT asserted - exiting ***")
   sys.exit(0)
 
-# # Show info about the machine we're running on
-# print ("*** Resin Machine Info:")
-# print ("*** Type: "+str(os.environ.get('RESIN_MACHINE_NAME')))
-# print ("*** Arch: "+str(os.environ.get('RESIN_ARCH')))
-
-# if os.environ.get("RESIN_HOST_CONFIG_core_freq")!=None:
-#   print ("*** Core freq: "+str(os.environ.get('RESIN_HOST_CONFIG_core_freq')))
-
-# if os.environ.get("RESIN_HOST_CONFIG_dtoverlay")!=None:
-#   print ("*** UART mode: "+str(os.environ.get('RESIN_HOST_CONFIG_dtoverlay')))
-
 # Check if the correct environment variables are set
 
 print ("*******************")
@@ -61,10 +50,12 @@ else:
 
 print ("GW_EUI:\t"+my_eui)
 
+# https://account.thethingsnetwork.org/api/v2/frequency-plans/ GET THE RIGHT ONDE FROM HEREGW_KEY
+
 # Define default configs
-latitude = os.getenv('GW_REF_LATITUDE', 0)
-longitude = os.getenv('GW_REF_LONGITUDE', 0)
-altitude = os.getenv('GW_REF_ALTITUDE', 0)
+latitude = os.getenv('LATITUDE', 0)
+longitude = os.getenv('LONGITUDE', 0)
+altitude = os.getenv('ALTITUDE', 0)
 frequency_plan_url = os.getenv('FREQ_PLAN_URL', "https://account.thethingsnetwork.org/api/v2/frequency-plans/EU_863_870")
 
 print ("Latitude:\t\t"+str(latitude))
@@ -171,35 +162,27 @@ while True:
   # Reset the gateway board - this only works for the Raspberry Pi.
   GPIO.setmode(GPIO.BOARD) # hardware pin numbers, just like gpio -1
 
-  if (os.environ.get("GW_RESET_PIN")!=None):
-    try:
-      pin_number = int(os.environ.get("GW_RESET_PIN"))
-      print ("[TTN Gateway]: Resetting concentrator on pin "+str(os.environ.get("GW_RESET_PIN")))
-      GPIO.setup(pin_number, GPIO.OUT, initial=GPIO.LOW)
-      GPIO.output(pin_number, 0)
-      time.sleep(0.1)
-      GPIO.output(pin_number, 1)
-      time.sleep(0.1)
-      GPIO.output(pin_number, 0)
-      time.sleep(0.1)
-      GPIO.input(pin_number)
-      GPIO.cleanup(pin_number)
-      time.sleep(0.1)
-    except ValueError:
-      print ("Can't interpret "+os.environ.get("GW_RESET_PIN")+" as a valid pin number.")
+  # Default port
+  pin_number = 22
 
-  else:
-    print ("[TTN Gateway]: Resetting concentrator on default pin 22.")
-    GPIO.setup(22, GPIO.OUT, initial=GPIO.LOW)
-    GPIO.output(22, 0)
-    time.sleep(0.1)
-    GPIO.output(22, 1)
-    time.sleep(0.1)
-    GPIO.output(22, 0)
-    time.sleep(0.1)
-    GPIO.input(22)
-    GPIO.cleanup(22)
-    time.sleep(0.1)
+  if (os.environ.get("RESET_PIN")!=None):
+    try:
+      pin_number = int(os.environ.get("RESET_PIN"))
+      print ("[Gateway]: Resetting concentrator on pin "+str(os.environ.get("RESET_PIN")))
+     
+    except ValueError:
+      print ("Can't interpret "+os.environ.get("RESET_PIN")+" as a valid pin number.")
+
+  GPIO.setup(pin_number, GPIO.OUT, initial=GPIO.LOW)
+  GPIO.output(pin_number, 0)
+  time.sleep(0.1)
+  GPIO.output(pin_number, 1)
+  time.sleep(0.1)
+  GPIO.output(pin_number, 0)
+  time.sleep(0.1)
+  GPIO.input(pin_number)
+  GPIO.cleanup(pin_number)
+  time.sleep(0.1)
 
   # Start forwarder
   subprocess.call(['/opt/ttn-gateway/mp_pkt_fwd', '-c', '/opt/ttn-gateway/', '-s', os.getenv('SPI_SPEED', '8000000')])
