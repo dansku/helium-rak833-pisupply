@@ -1,0 +1,39 @@
+FROM balenalib/%%BALENA_MACHINE_NAME%%-debian:latest-build AS buildstep
+
+WORKDIR /opt/ttn-gateway/
+
+# Install required packages
+RUN install_packages \
+    wget \
+    build-essential \
+    libc6-dev \
+    git pkg-config \
+    protobuf-compiler \
+    libprotobuf-dev \
+    libprotoc-dev \
+    automake \
+    libtool \
+    autoconf \
+    python-dev \
+    python-rpi.gpio
+
+COPY dev dev
+RUN ./dev/build.sh
+
+FROM balenalib/%%BALENA_MACHINE_NAME%%-debian:latest-run
+
+ENV UDEV=off
+
+WORKDIR /opt/ttn-gateway
+
+RUN install_packages python-rpi.gpio
+
+COPY --from=buildstep /opt/ttn-gateway/mp_pkt_fwd .
+COPY --from=buildstep /usr/local/lib/libpaho-embed-* /usr/lib/
+COPY --from=buildstep /usr/lib/libttn* /usr/lib/
+
+COPY run.py ./
+COPY start.sh ./
+
+# run when container lands on device
+CMD ["bash", "start.sh"]
